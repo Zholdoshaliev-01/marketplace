@@ -1,0 +1,23 @@
+# Python
+**/__pycache__/
+**/.pytest_cache/
+*.py[cod]
+*.db
+
+# JavaScript / Next.js
+**/node_modules/
+**/.next/
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/blob-report/
+**/.auth/
+*.tsbuildinfo
+
+# Local configuration and generated output
+**/.env
+**/.env.*
+!**/.env.example
+*.log
+*.dump
+*.backup

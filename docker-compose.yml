@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: marketplace
+      POSTGRES_USER: marketplace
+      POSTGRES_PASSWORD: marketplace
+    ports:
+      - "55432:5432"
+    volumes:
+      - marketplace_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketplace -d marketplace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./apps/backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://marketplace:marketplace@postgres:5432/marketplace
+      JWT_SECRET_KEY: local-development-marketplace-secret-change-in-production
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 15
+      REFRESH_TOKEN_EXPIRE_DAYS: 30
+      CORS_ORIGINS: http://localhost:3000
+      ENVIRONMENT: development
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  marketplace_postgres_data:
