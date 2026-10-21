@@ -18,6 +18,26 @@ afterEach(() => {
 });
 
 describe('API auth retry lifecycle', () => {
+  it('uses the same-origin API proxy by default', async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValueOnce(response(200, { ok: true }));
+
+    await expect(api('/health-check')).resolves.toEqual({ ok: true });
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/health-check');
+  });
+
+  it('turns a failed browser request into a useful API error', async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await expect(api('/auth/login')).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+      status: 0,
+      message: 'Не удалось связаться с сервером',
+    });
+  });
+
   it('keeps fulfillment operations on the single shared 401 refresh path', async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock

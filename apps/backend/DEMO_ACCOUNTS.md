@@ -7,8 +7,11 @@ All four use the default password `MarketKG2026!` unless `SEED_DEMO_PASSWORD` is
 | Role | Email | Phone |
 | --- | --- | --- |
 | Admin | `admin.demo@market.kg` | `+996700100003` |
-| Shop | `shop.demo@market.kg` | `+996700100001` |
-| Supplier | `supplier.demo@market.kg` | `+996700100002` |
-| Supplier B | `supplier-b.demo@market.kg` | `+996700100004` |
+| Shop — Магазин У дома | `shop.demo@market.kg` | `+996700100001` |
+| Shop — Береке Маркет | `shop-b.demo@market.kg` | `+996700100005` |
+| Shop — Народный магазин | `shop-c.demo@market.kg` | `+996700100006` |
+| Supplier — Алтын Дистрибьюшн | `supplier.demo@market.kg` | `+996700100002` |
+| Supplier — Береке Хозтовары | `supplier-b.demo@market.kg` | `+996700100004` |
+| Supplier — Нур Опт | `supplier-c.demo@market.kg` | `+996700100007` |
 
-The seed creates six `DEMO-*` products across two suppliers, a Bishkek delivery zone, and `DEMO-ORDER-001` for checking shop, supplier, and admin workflows. It removes only demo/legacy pilot data and leaves unrelated records untouched.
+The seed creates twelve `DEMO-*` products across three suppliers, three shops, six categories, a Bishkek delivery zone, and a three-supplier `DEMO-ORDER-001` for checking shop, supplier, and admin workflows. It removes only demo/legacy pilot data and leaves unrelated records untouched.

@@ -5,5 +5,6 @@ import { usePathname } from 'next/navigation';
 
 export function AdminNav() {
   const pathname = usePathname();
-  return <nav className="admin-nav" aria-label="Администрирование"><Link className={pathname.startsWith('/admin/orders') ? 'active' : ''} href="/admin/orders">Заказы</Link></nav>;
+  const items = [['/admin/orders', 'Заказы'], ['/admin/products', 'Товары'], ['/admin/suppliers', 'Поставщики'], ['/admin/categories', 'Категории']];
+  return <nav className="admin-nav" aria-label="Администрирование">{items.map(([href, label]) => <Link key={href} className={pathname.startsWith(href) ? 'active' : ''} href={href}>{label}</Link>)}</nav>;
 }

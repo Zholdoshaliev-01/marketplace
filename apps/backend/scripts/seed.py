@@ -23,18 +23,33 @@ from app.supplier_fulfillments.state_machine import FulfillmentStatus
 DEMO_PASSWORD = os.getenv("SEED_DEMO_PASSWORD", "MarketKG2026!")
 DEMO_USERS = {
     "shop": ("shop.demo@market.kg", "+996700100001", UserRole.SHOP),
+    "shop_b": ("shop-b.demo@market.kg", "+996700100005", UserRole.SHOP),
+    "shop_c": ("shop-c.demo@market.kg", "+996700100006", UserRole.SHOP),
     "supplier_a": ("supplier.demo@market.kg", "+996700100002", UserRole.SUPPLIER),
     "supplier_b": ("supplier-b.demo@market.kg", "+996700100004", UserRole.SUPPLIER),
+    "supplier_c": ("supplier-c.demo@market.kg", "+996700100007", UserRole.SUPPLIER),
     "admin": ("admin.demo@market.kg", "+996700100003", UserRole.ADMIN),
+}
+CATEGORY_IMAGES = {
+    "demo-drinks": "/images/products/drinks.svg",
+    "demo-grocery": "/images/products/grocery.svg",
+    "demo-household": "/images/products/household.svg",
+    "demo-snacks": "/images/products/snacks.svg",
+    "demo-hygiene": "/images/products/hygiene.svg",
+    "demo-stationery": "/images/products/stationery.svg",
 }
 CATEGORIES = [
     ("Напитки", "demo-drinks"),
     ("Бакалея", "demo-grocery"),
     ("Бытовые товары", "demo-household"),
+    ("Снеки и сладости", "demo-snacks"),
+    ("Гигиена", "demo-hygiene"),
+    ("Канцтовары", "demo-stationery"),
 ]
 SUPPLIERS = {
-    "supplier_a": ("Демо-поставщик Дордой", Market.DORDOI),
-    "supplier_b": ("Демо-поставщик Кара-Суу", Market.KARA_SUU),
+    "supplier_a": ("Алтын Дистрибьюшн", Market.DORDOI, "12-Б", "Напитки, бакалея и товары ежедневного спроса."),
+    "supplier_b": ("Береке Хозтовары", Market.KARA_SUU, "7-А", "Бытовая химия и товары для гигиены."),
+    "supplier_c": ("Нур Опт", Market.DORDOI, "25-В", "Снеки, сладости и канцтовары для магазинов."),
 }
 PRODUCTS = [
     ("supplier_a", "demo-drinks", "Минеральная вода 1 л", "DEMO-001", "45.00", 6, 120, "бут."),
@@ -43,7 +58,18 @@ PRODUCTS = [
     ("supplier_a", "demo-grocery", "Рис круглозёрный 5 кг", "DEMO-004", "560.00", 2, 30, "меш."),
     ("supplier_b", "demo-household", "Средство для мытья посуды 1 л", "DEMO-005", "190.00", 3, 60, "шт."),
     ("supplier_b", "demo-household", "Бумажные полотенца 6 рулонов", "DEMO-006", "350.00", 2, 42, "уп."),
+    ("supplier_b", "demo-hygiene", "Жидкое мыло 500 мл", "DEMO-007", "135.00", 6, 84, "шт."),
+    ("supplier_b", "demo-hygiene", "Влажные салфетки 100 шт.", "DEMO-008", "110.00", 5, 95, "уп."),
+    ("supplier_c", "demo-snacks", "Печенье ассорти 1 кг", "DEMO-009", "310.00", 4, 52, "кор."),
+    ("supplier_c", "demo-snacks", "Шоколад молочный, 20 шт.", "DEMO-010", "980.00", 1, 28, "кор."),
+    ("supplier_c", "demo-stationery", "Тетради 48 листов, 20 шт.", "DEMO-011", "740.00", 1, 24, "уп."),
+    ("supplier_c", "demo-stationery", "Ручки синие, 50 шт.", "DEMO-012", "650.00", 1, 40, "уп."),
 ]
+SHOPS = {
+    "shop": ("Магазин У дома", "Бишкек", "ул. Токтогула, 100"),
+    "shop_b": ("Береке Маркет", "Бишкек", "мкр. Асанбай, 21"),
+    "shop_c": ("Народный магазин", "Ош", "ул. Курманжан Датки, 145"),
+}
 
 
 def remove_pilot_data(db) -> None:
@@ -114,18 +140,18 @@ def get_or_create_category(db, name: str, slug: str) -> Category:
 
 
 def get_or_create_supplier(db, key: str, owner: User) -> Supplier:
-    name, market = SUPPLIERS[key]
+    name, market, pavilion, description = SUPPLIERS[key]
     supplier = db.scalar(select(Supplier).where(Supplier.owner_user_id == owner.id))
     if supplier is None:
-        supplier = Supplier(owner_user_id=owner.id, name=name, phone=owner.phone, market=market, pavilion="Демо-павильон 12", description="Демонстрационный поставщик Market KG", is_active=True)
+        supplier = Supplier(owner_user_id=owner.id, name=name, phone=owner.phone, market=market, pavilion=pavilion, description=description, is_active=True)
         db.add(supplier)
         db.flush()
     else:
         supplier.name = name
         supplier.phone = owner.phone
         supplier.market = market
-        supplier.pavilion = "Демо-павильон 12"
-        supplier.description = "Демонстрационный поставщик Market KG"
+        supplier.pavilion = pavilion
+        supplier.description = description
         supplier.is_active = True
     return supplier
 
@@ -136,15 +162,18 @@ def run_seed() -> tuple[int, int, int, int]:
     try:
         remove_pilot_data(db)
         users = {key: get_or_create_user(db, key) for key in DEMO_USERS}
-        shop = db.scalar(select(Shop).where(Shop.owner_user_id == users["shop"].id))
-        if shop is None:
-            shop = Shop(owner_user_id=users["shop"].id, name="Магазин У дома", phone=users["shop"].phone, city="Бишкек", address="ул. Токтогула, 100")
-            db.add(shop)
-        else:
-            shop.name = "Магазин У дома"
-            shop.phone = users["shop"].phone
-            shop.city = "Бишкек"
-            shop.address = "ул. Токтогула, 100"
+        shops: dict[str, Shop] = {}
+        for key, (name, city, address) in SHOPS.items():
+            shop = db.scalar(select(Shop).where(Shop.owner_user_id == users[key].id))
+            if shop is None:
+                shop = Shop(owner_user_id=users[key].id, name=name, phone=users[key].phone, city=city, address=address)
+                db.add(shop)
+            else:
+                shop.name = name
+                shop.phone = users[key].phone
+                shop.city = city
+                shop.address = address
+            shops[key] = shop
 
         categories = {slug: get_or_create_category(db, name, slug) for name, slug in CATEGORIES}
         suppliers = {key: get_or_create_supplier(db, key, users[key]) for key in SUPPLIERS}
@@ -179,16 +208,24 @@ def run_seed() -> tuple[int, int, int, int]:
                     setattr(product, field, value)
             image = db.scalar(select(ProductImage).where(ProductImage.product_id == product.id))
             if image is None:
-                db.add(ProductImage(product_id=product.id, image_url=f"https://placehold.co/600x600?text={sku}", sort_order=0))
+                db.add(ProductImage(product_id=product.id, image_url=CATEGORY_IMAGES[category_slug], sort_order=0))
 
-        demo_product = db.scalar(select(Product).where(Product.sku == "DEMO-002", Product.supplier_id == suppliers["supplier_a"].id))
-        if demo_product and db.scalar(select(Order.id).where(Order.order_number == "DEMO-ORDER-001")) is None:
-            subtotal = Decimal("560.00")
-            order = Order(order_number="DEMO-ORDER-001", idempotency_key="demo-order-001", shop_id=shop.id, status=OrderStatus.CONFIRMED, subtotal=subtotal, delivery_price=Decimal("200.00"), total=Decimal("760.00"), payment_type=PaymentType.BANK_TRANSFER, city="Бишкек", address=shop.address, phone=shop.phone, comment="Демонстрационный заказ для проверки админки и поставщика")
+        demo_products = {
+            sku: db.scalar(select(Product).where(Product.sku == sku, Product.supplier_id == suppliers[supplier_key].id))
+            for supplier_key, sku in (("supplier_a", "DEMO-002"), ("supplier_b", "DEMO-005"), ("supplier_c", "DEMO-009"))
+        }
+        if all(demo_products.values()) and db.scalar(select(Order.id).where(Order.order_number == "DEMO-ORDER-001")) is None:
+            subtotal = Decimal("2370.00")
+            shop = shops["shop"]
+            order = Order(order_number="DEMO-ORDER-001", idempotency_key="demo-order-001", shop_id=shop.id, status=OrderStatus.CONFIRMED, subtotal=subtotal, delivery_price=Decimal("200.00"), total=Decimal("2570.00"), payment_type=PaymentType.BANK_TRANSFER, city="Бишкек", address=shop.address, phone=shop.phone, comment="Заказ из товаров трёх поставщиков для проверки всех ролей")
             db.add(order)
             db.flush()
-            db.add(OrderItem(order_id=order.id, product_id=demo_product.id, supplier_id=demo_product.supplier_id, product_name_snapshot=demo_product.name, sku_snapshot=demo_product.sku, quantity=2, unit_price=demo_product.price, total_price=subtotal))
-            db.add(SupplierFulfillment(order_id=order.id, supplier_id=demo_product.supplier_id, status=FulfillmentStatus.PENDING))
+            quantities = {"DEMO-002": 2, "DEMO-005": 3, "DEMO-009": 4}
+            for sku, product in demo_products.items():
+                quantity = quantities[sku]
+                item_total = product.price * quantity
+                db.add(OrderItem(order_id=order.id, product_id=product.id, supplier_id=product.supplier_id, product_name_snapshot=product.name, sku_snapshot=product.sku, quantity=quantity, unit_price=product.price, total_price=item_total))
+                db.add(SupplierFulfillment(order_id=order.id, supplier_id=product.supplier_id, status=FulfillmentStatus.PENDING))
         db.commit()
         product_count = db.scalar(select(func.count(Product.id)).where(Product.sku.like("DEMO-%"))) or 0
         return len(users), len(suppliers), len(categories), product_count

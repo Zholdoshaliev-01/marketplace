@@ -1,5 +1,7 @@
 # Local pilot runbook
 
+Пошаговая проверка всех ролей и актуальная матрица demo-аккаунтов также описаны в `docs/stage-1-demo.md`.
+
 Этот runbook предназначен только для локальной Windows development-среды. Не используйте pilot database или demo credentials в production.
 
 ## 1. Prerequisites
@@ -44,7 +46,7 @@ python -m scripts.seed
 
 Seed idempotent: он создаёт или обновляет только локальные demo-записи и ничего не удаляет. Seed откажется работать, если `ENVIRONMENT` не равен `development` или `test`.
 
-Pilot catalog содержит категории «Напитки», «Бакалея», «Бытовые товары», восемь активных товаров двух поставщиков и delivery zone «Бишкек».
+Pilot catalog содержит шесть категорий, двенадцать активных товаров трёх поставщиков, три магазина и delivery zone «Бишкек».
 
 ## 4. Backend
 
@@ -54,7 +56,7 @@ Pilot catalog содержит категории «Напитки», «Бака
 uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
-Health check: `http://127.0.0.1:8001/api/v1/health`.
+Health check: `http://127.0.0.1:8001/health`.
 
 ## 5. Frontend
 
@@ -62,7 +64,7 @@ Health check: `http://127.0.0.1:8001/api/v1/health`.
 
 ```powershell
 Set-Location apps/frontend
-$env:NEXT_PUBLIC_API_URL='http://127.0.0.1:8001/api/v1'
+$env:BACKEND_URL='http://127.0.0.1:8001'
 npm run dev
 ```
 
@@ -70,14 +72,17 @@ npm run dev
 
 ## 6. Local demo accounts
 
-Общий development password: `Pilot12345!`. Его можно заменить до seed через `$env:SEED_DEMO_PASSWORD`.
+Общий development password: `MarketKG2026!`. Его можно заменить до seed через `$env:SEED_DEMO_PASSWORD`.
 
 | Роль | Login |
 | --- | --- |
-| SHOP | `pilot-shop@example.com` |
-| SUPPLIER A — Алтын Дистрибьюшн | `pilot-supplier-a@example.com` |
-| SUPPLIER B — Береке Хозтовары | `pilot-supplier-b@example.com` |
-| ADMIN | `pilot-admin@example.com` |
+| SHOP | `shop.demo@market.kg` |
+| SHOP B | `shop-b.demo@market.kg` |
+| SHOP C | `shop-c.demo@market.kg` |
+| SUPPLIER A — Алтын Дистрибьюшн | `supplier.demo@market.kg` |
+| SUPPLIER B — Береке Хозтовары | `supplier-b.demo@market.kg` |
+| SUPPLIER C — Нур Опт | `supplier-c.demo@market.kg` |
+| ADMIN | `admin.demo@market.kg` |
 
 Это только воспроизводимые local demo credentials, не production secrets.
 

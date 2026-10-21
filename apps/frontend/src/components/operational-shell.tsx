@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ExternalLink, LayoutDashboard, LogOut, Menu, PackageCheck, ShoppingBasket, X } from 'lucide-react';
+import { Boxes, ExternalLink, LayoutDashboard, LogOut, Menu, PackageCheck, ShoppingBasket, Store, Tags, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 
@@ -15,6 +15,9 @@ const config = {
     items: [
       { href: '/admin', label: 'Обзор', icon: LayoutDashboard, exact: true },
       { href: '/admin/orders', label: 'Заказы', icon: ShoppingBasket },
+      { href: '/admin/products', label: 'Товары', icon: Boxes },
+      { href: '/admin/suppliers', label: 'Поставщики', icon: Store },
+      { href: '/admin/categories', label: 'Категории', icon: Tags },
     ],
   },
   SUPPLIER: {

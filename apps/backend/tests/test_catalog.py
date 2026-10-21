@@ -112,7 +112,11 @@ def test_public_suppliers_only_active_filter_detail_and_deactivate(client, db):
     assert response.status_code == 200
     assert [item["id"] for item in response.json()["items"]] == [str(supplier_a.id)]
     assert client.get(f"/api/v1/suppliers/{supplier_b.id}").status_code == 404
-    assert client.patch(f"/api/v1/admin/suppliers/{supplier_a.id}", headers=auth(admin), json={"description": "Updated"}).status_code == 200
+    updated = client.patch(f"/api/v1/admin/suppliers/{supplier_a.id}", headers=auth(admin), json={"description": "Updated"})
+    assert updated.status_code == 200
+    assert updated.json()["phone"] == supplier_a.phone
+    assert updated.json()["owner_user_id"] == str(supplier_a.owner_user_id)
+    assert updated.json()["is_active"] is True
     assert client.delete(f"/api/v1/admin/suppliers/{supplier_a.id}", headers=auth(admin)).status_code == 204
     db.expire_all()
     assert db.get(Supplier, supplier_a.id).is_active is False

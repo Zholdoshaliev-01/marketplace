@@ -13,6 +13,8 @@ def test_registration_returns_access_and_sets_refresh_cookie(client):
     response = client.post("/api/v1/auth/register", json=payload())
     assert response.status_code == 201
     assert response.json()["user"]["role"] == "SHOP"
+    assert response.json()["shop"]["name"] == "Магазин"
+    assert response.json()["shop"]["owner_user_id"] == response.json()["user"]["id"]
     assert response.json()["access_token"]
     assert "refresh_token" in response.cookies
 
@@ -26,7 +28,9 @@ def test_duplicate_phone(client):
 
 def test_login_and_wrong_password(client):
     client.post("/api/v1/auth/register", json=payload())
-    assert client.post("/api/v1/auth/login", json={"phone_or_email": "+996700000001", "password": "strong-password"}).status_code == 200
+    response = client.post("/api/v1/auth/login", json={"phone_or_email": "+996700000001", "password": "strong-password"})
+    assert response.status_code == 200
+    assert response.json()["shop"]["name"] == "Магазин"
     assert client.post("/api/v1/auth/login", json={"phone_or_email": "+996700000001", "password": "wrong-password"}).status_code == 401
 
 

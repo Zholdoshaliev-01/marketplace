@@ -7,7 +7,7 @@ from app.auth.dependencies import require_roles
 from app.core.enums import Market, UserRole
 from app.db.session import get_db
 from app.suppliers import service
-from app.suppliers.schemas import SupplierCreate, SupplierListResponse, SupplierPublic, SupplierUpdate
+from app.suppliers.schemas import SupplierCreate, SupplierListResponse, SupplierManagement, SupplierPublic, SupplierUpdate
 
 router = APIRouter(prefix="/api/v1", tags=["catalog"])
 admin_router = APIRouter(prefix="/api/v1/admin", tags=["admin-catalog"], dependencies=[Depends(require_roles(UserRole.ADMIN))])
@@ -23,17 +23,17 @@ def public_supplier(supplier_id: uuid.UUID, db: Session = Depends(get_db)):
     return service.get_public_supplier(db, supplier_id)
 
 
-@admin_router.get("/suppliers", response_model=list[SupplierPublic])
+@admin_router.get("/suppliers", response_model=list[SupplierManagement])
 def admin_suppliers(db: Session = Depends(get_db)):
     return service.list_all_suppliers(db)
 
 
-@admin_router.post("/suppliers", response_model=SupplierPublic, status_code=status.HTTP_201_CREATED)
+@admin_router.post("/suppliers", response_model=SupplierManagement, status_code=status.HTTP_201_CREATED)
 def create_supplier(payload: SupplierCreate, db: Session = Depends(get_db)):
     return service.create_supplier(db, payload)
 
 
-@admin_router.patch("/suppliers/{supplier_id}", response_model=SupplierPublic)
+@admin_router.patch("/suppliers/{supplier_id}", response_model=SupplierManagement)
 def update_supplier(supplier_id: uuid.UUID, payload: SupplierUpdate, db: Session = Depends(get_db)):
     return service.update_supplier(db, supplier_id, payload)
 

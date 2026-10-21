@@ -1,5 +1,6 @@
 export * from './auth';
 export * from './admin-orders';
+export * from './admin-catalog';
 export * from './cart';
 export * from './catalog';
 export * from './client';

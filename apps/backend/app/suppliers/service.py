@@ -7,12 +7,22 @@ from sqlalchemy.orm import Session
 from app.core.enums import Market, UserRole
 from app.core.exceptions import BusinessError
 from app.suppliers.models import Supplier
-from app.suppliers.schemas import PaginationMeta, SupplierCreate, SupplierListResponse, SupplierPublic, SupplierUpdate
+from app.suppliers.schemas import PaginationMeta, SupplierCreate, SupplierListResponse, SupplierManagement, SupplierPublic, SupplierUpdate
 from app.users.models import User
 
 
 def supplier_public(supplier: Supplier) -> SupplierPublic:
     return SupplierPublic(id=supplier.id, name=supplier.name, market=supplier.market, pavilion=supplier.pavilion, description=supplier.description)
+
+
+def supplier_management(supplier: Supplier) -> SupplierManagement:
+    return SupplierManagement(
+        **supplier_public(supplier).model_dump(),
+        phone=supplier.phone,
+        owner_user_id=supplier.owner_user_id,
+        is_active=supplier.is_active,
+        created_at=supplier.created_at,
+    )
 
 
 def list_public_suppliers(db: Session, market: Market | None, search: str | None, page: int, page_size: int) -> SupplierListResponse:
@@ -33,8 +43,8 @@ def get_public_supplier(db: Session, supplier_id: uuid.UUID) -> SupplierPublic:
     return supplier_public(supplier)
 
 
-def list_all_suppliers(db: Session) -> list[SupplierPublic]:
-    return [supplier_public(item) for item in db.scalars(select(Supplier).order_by(Supplier.name)).all()]
+def list_all_suppliers(db: Session) -> list[SupplierManagement]:
+    return [supplier_management(item) for item in db.scalars(select(Supplier).order_by(Supplier.name)).all()]
 
 
 def _ensure_owner_user(db: Session, owner_user_id: uuid.UUID | None) -> None:
@@ -45,16 +55,16 @@ def _ensure_owner_user(db: Session, owner_user_id: uuid.UUID | None) -> None:
         raise BusinessError("INVALID_SUPPLIER_OWNER", "Владелец должен быть пользователем SUPPLIER", 422)
 
 
-def create_supplier(db: Session, payload: SupplierCreate) -> SupplierPublic:
+def create_supplier(db: Session, payload: SupplierCreate) -> SupplierManagement:
     _ensure_owner_user(db, payload.owner_user_id)
     supplier = Supplier(**payload.model_dump())
     db.add(supplier)
     db.commit()
     db.refresh(supplier)
-    return supplier_public(supplier)
+    return supplier_management(supplier)
 
 
-def update_supplier(db: Session, supplier_id: uuid.UUID, payload: SupplierUpdate) -> SupplierPublic:
+def update_supplier(db: Session, supplier_id: uuid.UUID, payload: SupplierUpdate) -> SupplierManagement:
     supplier = db.get(Supplier, supplier_id)
     if supplier is None:
         raise BusinessError("SUPPLIER_NOT_FOUND", "Поставщик не найден", 404)
@@ -63,7 +73,7 @@ def update_supplier(db: Session, supplier_id: uuid.UUID, payload: SupplierUpdate
     for field, value in changes.items():
         setattr(supplier, field, value)
     db.commit()
-    return supplier_public(supplier)
+    return supplier_management(supplier)
 
 
 def deactivate_supplier(db: Session, supplier_id: uuid.UUID) -> None:

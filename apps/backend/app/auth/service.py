@@ -42,6 +42,9 @@ def register_user(db: Session, payload: RegisterRequest) -> AuthResult:
     db.add(user)
     db.flush()
     db.add(Shop(owner_user_id=user.id, **payload.shop.model_dump()))
+    # SessionLocal disables autoflush. Persist the shop before _auth_result
+    # queries it so registration returns the complete newly-created account.
+    db.flush()
     return _auth_result(db, user)
 
 

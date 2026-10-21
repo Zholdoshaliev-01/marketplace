@@ -2,7 +2,9 @@ export class ApiError extends Error {
   constructor(public code: string, public status: number, message: string) { super(message) }
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001/api/v1';
+// Browser requests always use the Next.js same-origin rewrite. The backend
+// address is configured server-side through BACKEND_URL in next.config.ts.
+const API_URL = '/api/v1';
 export const AUTH_LOGOUT_EVENT = 'marketplace:auth-logout';
 let accessToken: string | null = null;
 let sessionExpired = false;
@@ -63,6 +65,13 @@ export async function api<T>(path: string, init: RequestInit = {}, retried = fal
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, { ...init, headers, credentials: 'include', signal: requestController.signal });
+  } catch (error) {
+    const timedOut = error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError');
+    throw new ApiError(
+      timedOut ? 'REQUEST_TIMEOUT' : 'NETWORK_ERROR',
+      0,
+      timedOut ? 'Сервер не ответил вовремя' : 'Не удалось связаться с сервером',
+    );
   } finally {
     clearTimeout(timeout);
     init.signal?.removeEventListener('abort', forwardAbort);

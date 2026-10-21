@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -30,6 +31,13 @@ class SupplierPublic(BaseModel):
     market: Market
     pavilion: str | None
     description: str | None
+
+
+class SupplierManagement(SupplierPublic):
+    phone: str
+    owner_user_id: uuid.UUID | None
+    is_active: bool
+    created_at: datetime
 
 
 class PaginationMeta(BaseModel):

@@ -59,6 +59,9 @@ describe('role navigation shells', () => {
     mockedAuth.mockReturnValue(account('ADMIN')); pathname = '/admin';
     render(<OperationalShell workspace="ADMIN"><div>content</div></OperationalShell>);
     expect(screen.getByRole('link', { name: /Заказы/ })).toHaveAttribute('href', '/admin/orders');
+    expect(screen.getByRole('link', { name: /Товары/ })).toHaveAttribute('href', '/admin/products');
+    expect(screen.getByRole('link', { name: /Поставщики/ })).toHaveAttribute('href', '/admin/suppliers');
+    expect(screen.getByRole('link', { name: /Категории/ })).toHaveAttribute('href', '/admin/categories');
     expect(screen.queryByText('Корзина')).not.toBeInTheDocument();
     expect(screen.queryByText('Мои товары')).not.toBeInTheDocument();
   });
